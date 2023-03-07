@@ -170,6 +170,8 @@ interface IResult<T, E> {
    */
   match<A>(ok: (t: T) => A, err: (e: E) => A): A
 
+  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1>
+
   /**
    * **This method is unsafe, and should only be used in a test environments**
    *
@@ -244,6 +246,10 @@ export class Ok<T, E> implements IResult<T, E> {
     return ok(this.value)
   }
 
+  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1> {
+    return operator(this)
+  }
+
   _unsafeUnwrap(_?: ErrorConfig): T {
     return this.value
   }
@@ -305,6 +311,10 @@ export class Err<T, E> implements IResult<T, E> {
 
   match<A>(_ok: (t: T) => A, err: (e: E) => A): A {
     return err(this.error)
+  }
+
+  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1> {
+    return operator(this)
   }
 
   _unsafeUnwrap(config?: ErrorConfig): T {

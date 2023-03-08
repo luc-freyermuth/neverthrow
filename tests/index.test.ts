@@ -912,6 +912,42 @@ describe('ResultAsync', () => {
     })
   })
 
+  describe('pipe', () => {
+    it('applies the function on the result to create a new one', async () => {
+      const doubleOk = <E>(result: Result<number, E>) => result.map(okValue => okValue * 2);
+
+      // /!\ piped has the wrong type, pipe typing does not work correctly on AsyncResult
+      const piped = await okAsync(42).pipe(doubleOk);
+
+      expect(piped).toStrictEqual(ok(84));
+    })
+
+    // it('applies the functions on the result one after the other to create a new result', () => {
+    //   const doubleOk = <E>(result: Result<number, E>) => result.map(okValue => okValue * 2);
+    //   const swap = <T, E>(result: Result<T, E>): Result<E, T> => {
+    //     if (result.isOk()) {
+    //       return err(result.value)
+    //     } else {
+    //       return ok(result.error)
+    //     }
+    //   } 
+
+    //   const piped = ok(42).pipe(doubleOk, swap);
+
+    //   expect(piped).toStrictEqual(err(84));
+    // })
+
+    // it('applies the the generated function on the result to create a new one', () => {
+    //   const staticMapOk = <T1 extends string, T2, E>(errorMap: Record<T1, T2>): PipeableOperator<T1, E, T2, E> => {
+    //       return source => source.map(err => errorMap[err]);
+    //   }
+    
+    //   const piped = ok('hello' as const).pipe(staticMapOk({ hello: 'bonjour', bye: 'aurevoir' }));
+
+    //   expect(piped).toStrictEqual(ok('bonjour'));
+    // })
+  })
+
   describe('unwrapOr', () => {
     it('returns a promise to the result value on an Ok', async () => {
       const unwrapped = await okAsync(12).unwrapOr(10)

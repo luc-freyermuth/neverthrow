@@ -1,3 +1,4 @@
+import { PipeableOperator } from './pipe'
 import { errAsync, ResultAsync } from './'
 import { createNeverThrowError, ErrorConfig } from './_internals/error'
 import {
@@ -63,8 +64,6 @@ export type Result<T, E> = Ok<T, E> | Err<T, E>
 export const ok = <T, E = never>(value: T): Ok<T, E> => new Ok(value)
 
 export const err = <T = never, E = unknown>(err: E): Err<T, E> => new Err(err)
-
-export type PipeableOperator<T1, E1, T2, E2> = (source: Result<T1, E1>) => Result<T2, E2>
 
 interface IResult<T, E> {
   /**
@@ -177,6 +176,12 @@ interface IResult<T, E> {
     operator1: PipeableOperator<T, E, T1, E1>,
     operator2: PipeableOperator<T1, E1, T2, E2>,
   ): Result<T2, E2>
+  pipe(
+    ...tooManyOperators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): Result<unknown, unknown>
 
   /**
    * **This method is unsafe, and should only be used in a test environments**
@@ -258,6 +263,12 @@ export class Ok<T, E> implements IResult<T, E> {
     operator2: PipeableOperator<T1, E1, T2, E2>,
   ): Result<T2, E2>
   pipe(
+    ...tooManyOperators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): Result<unknown, unknown>
+  pipe(
     ...operators: [
       PipeableOperator<T, E, unknown, unknown>,
       ...PipeableOperator<unknown, unknown, unknown, unknown>[]
@@ -338,6 +349,12 @@ export class Err<T, E> implements IResult<T, E> {
     operator1: PipeableOperator<T, E, T1, E1>,
     operator2: PipeableOperator<T1, E1, T2, E2>,
   ): Result<T2, E2>
+  pipe(
+    ...tooManyOperators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): Result<unknown, unknown>
   pipe(
     ...operators: [
       PipeableOperator<T, E, unknown, unknown>,

@@ -18,6 +18,7 @@ import {
   InferErrTypes,
   InferOkTypes,
 } from './_internals/utils'
+import { PipeableOperator } from 'pipe'
 
 export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
   private _promise: Promise<Result<T, E>>
@@ -131,6 +132,26 @@ export class ResultAsync<T, E> implements PromiseLike<Result<T, E>> {
 
   match<A>(ok: (t: T) => A, _err: (e: E) => A): Promise<A> {
     return this._promise.then((res) => res.match(ok, _err))
+  }
+
+  pipe<T1, E1>(operator: PipeableOperator<T, E, T1, E1>): ResultAsync<T1, E1>
+  pipe<T1, E1, T2, E2>(
+    operator1: PipeableOperator<T, E, T1, E1>,
+    operator2: PipeableOperator<T1, E1, T2, E2>,
+  ): ResultAsync<T2, E2>
+  pipe(
+    ...tooManyOperators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): ResultAsync<unknown, unknown>
+  pipe(
+    ...operators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): ResultAsync<unknown, unknown> {
+    return new ResultAsync(this._promise.then((res) => res.pipe(...operators)))
   }
 
   unwrapOr<A>(t: A): Promise<T | A> {

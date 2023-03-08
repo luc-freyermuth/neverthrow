@@ -194,13 +194,13 @@ describe('Result.Ok', () => {
     })
 
     it('applies the the generated function on the result to create a new one', () => {
-      const staticMapErr = <T, E1 extends string, E2>(errorMap: Record<E1, E2>): PipeableOperator<T, E1, T, E2> => {
-          return source => source.mapErr(err => errorMap[err]);
+      const staticMapOk = <T1 extends string, T2, E>(errorMap: Record<T1, T2>): PipeableOperator<T1, E, T2, E> => {
+          return source => source.map(err => errorMap[err]);
       }
     
-      const piped = err('hello' as const).pipe(staticMapErr({ hello: 'bonjour', bye: 'aurevoir' }));
+      const piped = ok('hello' as const).pipe(staticMapOk({ hello: 'bonjour', bye: 'aurevoir' }));
 
-      expect(piped).toStrictEqual(err('bonjour'));
+      expect(piped).toStrictEqual(ok('bonjour'));
     })
   })
 

@@ -12,6 +12,7 @@ import {
   okAsync,
   Result,
   ResultAsync,
+  PipeableOperator
 } from '../src'
 
 describe('Result.Ok', () => {
@@ -190,6 +191,16 @@ describe('Result.Ok', () => {
       const piped = ok(42).pipe(doubleOk, swap);
 
       expect(piped).toStrictEqual(err(84));
+    })
+
+    it('applies the the generated function on the result to create a new one', () => {
+      const staticMapErr = <T, E1 extends string, E2>(errorMap: Record<E1, E2>): PipeableOperator<T, E1, T, E2> => {
+          return source => source.mapErr(err => errorMap[err]);
+      }
+    
+      const piped = err('hello' as const).pipe(staticMapErr({ hello: 'bonjour', bye: 'aurevoir' }));
+
+      expect(piped).toStrictEqual(err('bonjour'));
     })
   })
 

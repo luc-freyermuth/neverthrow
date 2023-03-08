@@ -176,6 +176,21 @@ describe('Result.Ok', () => {
 
       expect(piped).toStrictEqual(ok(84));
     })
+
+    it('applies the functions on the result one after the other to create a new result', () => {
+      const doubleOk = <E>(result: Result<number, E>) => result.map(okValue => okValue * 2);
+      const swap = <T, E>(result: Result<T, E>): Result<E, T> => {
+        if (result.isOk()) {
+          return err(result.value)
+        } else {
+          return ok(result.error)
+        }
+      } 
+
+      const piped = ok(42).pipe(doubleOk, swap);
+
+      expect(piped).toStrictEqual(err(84));
+    })
   })
 
   it('Unwraps without issue', () => {

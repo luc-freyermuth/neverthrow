@@ -64,6 +64,8 @@ export const ok = <T, E = never>(value: T): Ok<T, E> => new Ok(value)
 
 export const err = <T = never, E = unknown>(err: E): Err<T, E> => new Err(err)
 
+export type PipeableOperator<T1, E1, T2, E2> = (source: Result<T1, E1>) => Result<T2, E2>
+
 interface IResult<T, E> {
   /**
    * Used to check if a `Result` is an `OK`
@@ -170,7 +172,11 @@ interface IResult<T, E> {
    */
   match<A>(ok: (t: T) => A, err: (e: E) => A): A
 
-  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1>
+  pipe<T1, E1>(operator: PipeableOperator<T, E, T1, E1>): Result<T1, E1>
+  pipe<T1, E1, T2, E2>(
+    operator1: PipeableOperator<T, E, T1, E1>,
+    operator2: PipeableOperator<T1, E1, T2, E2>,
+  ): Result<T2, E2>
 
   /**
    * **This method is unsafe, and should only be used in a test environments**
@@ -246,8 +252,22 @@ export class Ok<T, E> implements IResult<T, E> {
     return ok(this.value)
   }
 
-  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1> {
-    return operator(this)
+  pipe<T1, E1>(operator: PipeableOperator<T, E, T1, E1>): Result<T1, E1>
+  pipe<T1, E1, T2, E2>(
+    operator1: PipeableOperator<T, E, T1, E1>,
+    operator2: PipeableOperator<T1, E1, T2, E2>,
+  ): Result<T2, E2>
+  pipe(
+    ...operators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): Result<unknown, unknown> {
+    return operators.reduce<Result<unknown, unknown>>(
+      (accumulatedResult, operator) =>
+        (operator as PipeableOperator<unknown, unknown, unknown, unknown>)(accumulatedResult),
+      this,
+    )
   }
 
   _unsafeUnwrap(_?: ErrorConfig): T {
@@ -313,8 +333,22 @@ export class Err<T, E> implements IResult<T, E> {
     return err(this.error)
   }
 
-  pipe<T1, E1>(operator: (source: Result<T, E>) => Result<T1, E1>): Result<T1, E1> {
-    return operator(this)
+  pipe<T1, E1>(operator: PipeableOperator<T, E, T1, E1>): Result<T1, E1>
+  pipe<T1, E1, T2, E2>(
+    operator1: PipeableOperator<T, E, T1, E1>,
+    operator2: PipeableOperator<T1, E1, T2, E2>,
+  ): Result<T2, E2>
+  pipe(
+    ...operators: [
+      PipeableOperator<T, E, unknown, unknown>,
+      ...PipeableOperator<unknown, unknown, unknown, unknown>[]
+    ]
+  ): Result<unknown, unknown> {
+    return operators.reduce<Result<unknown, unknown>>(
+      (accumulatedResult, operator) =>
+        (operator as PipeableOperator<unknown, unknown, unknown, unknown>)(accumulatedResult),
+      this,
+    )
   }
 
   _unsafeUnwrap(config?: ErrorConfig): T {
